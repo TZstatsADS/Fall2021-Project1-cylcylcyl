@@ -1,0 +1,226 @@
+---
+title: "Know about philosophy from different school"
+output: html_document
+---
+#### This report is a guidebook with selected Q&A aims at finding out what kind of topics do philosophers from different school focus on.
+
+ 
+#### The whole dataset :the dataset for the Philosophy Data Project contains over 300,000 sentences from over 50 texts spanning 10 major schools of philosophy. You can read more about the project on http://www.philosophydata.com/. 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message=FALSE, warning=FALSE,echo=FALSE}
+packages.used=c("tm", "wordcloud", "RColorBrewer", 
+                "dplyr", "tidytext")
+
+# check packages that need to be installed.
+packages.needed=setdiff(packages.used, 
+                        intersect(installed.packages()[,1], 
+                                  packages.used))
+# install additional packages
+if(length(packages.needed)>0){
+  install.packages(packages.needed, dependencies = TRUE)
+}
+
+# load packages
+library(tm)
+library(wordcloud)
+library(RColorBrewer)
+library(dplyr)
+library(tidytext)
+source("../lib/plotfigure.R")
+```
+
+This report is prepared with the following environmental settings.
+
+```{r}
+print(R.version)
+```
+
+```{r read data, warning=FALSE, message=FALSE,echo=FALSE}
+ps.data<-read.csv('../data/philosophy_data.csv',stringsAsFactors = FALSE)
+
+```
+
+## Question 1: Which schools are we going to explore?what does each school consist of?
+
+For me,I am a totally beginner for philosophy and philosophors,especially considering the fact that I am an international student.Although I know about the famous philosophors like plato and aristotle,yet it is important to explore their philosophy from the perspective of schools. 
+
+```{r explore data, warning=FALSE, message=FALSE}
+#what are the schools in this dataset
+ps.schools = unlist(unique(ps.data$school))
+#what are the titles in this dataset
+ps.titles =unlist(unique(ps.data$title))
+
+ps.school.split = split(ps.data,ps.data$school)
+ps.school.table = as.data.frame(table(ps.data$school))
+colnames(ps.school.table)=c("school","count")
+ps.school.table = ps.school.table[order(ps.school.table$count,decreasing =  TRUE),]
+barplot(ps.school.table$count, las = 2, names.arg = ps.school.table$school,
+        col ="lightblue", main ="Most frequent schools",
+        ylab = "Sentence Count")
+```
+
+
+
+## Question 2: How philosophors  think about the world in general?
+
+Firstly,we can see how philosophers think about the world by analyzing the frequency of certain words appearing in the sentences。
+
+```{r data preprocessing,warning=FALSE, message=FALSE}
+#Since the data has been lower-cased and tokenized,we can use the tokenized texts and remove all 
+ps.corpus = Corpus(VectorSource(ps.data$tokenized_txt))
+ps.corpus = tm_map(ps.corpus, removeNumbers)
+ps.corpus = tm_map(ps.corpus, removePunctuation)
+ps.corpus = tm_map(ps.corpus, removeWords, c("the", "and","also","two", "one","can","may","will","must","might","just","thus","therefore",stopwords("english")))
+ps.corpus =  tm_map(ps.corpus, stripWhitespace)
+```
+
+```{r word-frequency}
+ps.tdm.all<-TermDocumentMatrix(ps.corpus)
+ps.tdm.tidy=tidy(ps.tdm.all)
+ps.tdm.overall=summarise(group_by(ps.tdm.tidy, term), sum(count))
+#word frequency 
+ps.wordfreq <- data.frame(word =ps.tdm.overall$term ,freq=ps.tdm.overall$`sum(count)`)
+ps.wordfreq <- ps.wordfreq[order(ps.wordfreq$freq,decreasing = TRUE),]
+head(ps.wordfreq,20)
+```
+```{r, warning=FALSE, message=FALSE}
+barplot(ps.wordfreq[1:20,]$freq, las = 2, names.arg = ps.wordfreq[1:20,]$word,
+        col ="lightblue", main ="Most frequent words",
+        ylab = "Word frequencies")
+```
+
+```{r, warning=FALSE, message=FALSE}
+#wordcloud in general
+wordcloud(ps.tdm.overall$term, ps.tdm.overall$`sum(count)`,
+          scale=c(3,0.5),
+          max.words=100,
+          min.freq=100,
+          random.order=FALSE,
+          rot.per=0.3,
+          use.r.layout=T,
+          random.color=FALSE,
+          colors=brewer.pal(8,"Dark2"))
+```
+
+
+We can see various philosophy topics in the high frequency words:
+"things"and "man","world"、"nature"、"object"、"subject"and so on;
+As we would like to identify interesting words for each sentence, we use [TF-IDF]to weigh each term within each sentence. It highlights terms that are more specific for a particular sentence. 
+
+```{r,warning=FALSE, message=FALSE}
+# compute TF-IDF weighted document-term matrices for individual sentences
+ps.dtm <- DocumentTermMatrix(ps.corpus,
+                          control = list(weighting = weightTfIdf,stopwords = TRUE))
+#ps.dtm=tidy(dtm)
+ps.dtm = removeSparseTerms(ps.dtm , 0.99)
+freq = data.frame(sort(colSums(as.matrix(ps.dtm)), decreasing=TRUE))
+wordcloud(rownames(freq), freq[,1], max.words=100, colors=brewer.pal(5, "Dark2"))
+```
+
+For each sentence,the "say" outstands,it seems that a lot of famous quoting exist through widsom's words
+
+## Question 3:How do philosophors from different school think about the world?What are the difference
+
+
+
+#### For school analytic:
+```{r,warning=FALSE, message=FALSE}
+creat.wordcloud(ps.school.split[1],ps.data,names(ps.school.split[1]))
+```
+
+For school analytic:"theory","sense","truth","sense","fact" are the keywords
+
+#### For school aristotle:
+```{r,warning=FALSE, message=FALSE,echo=FALSE}
+creat.wordcloud(ps.school.split[2],ps.data,names(ps.school.split[2]))
+```
+
+For school aristotle:"will","must","reason","nature","animal" are the keywords
+
+#### For school capitalism:
+```{r,warning=FALSE, message=FALSE,echo=FALSE}
+creat.wordcloud(ps.school.split[3],ps.data,names(ps.school.split[3]))
+```
+
+For school capitalism: Price,money ,capital are the main topics
+
+#### For school communism:
+```{r,warning=FALSE, message=FALSE,echo=FALSE}
+creat.wordcloud(ps.school.split[4],ps.data,names(ps.school.split[4]))
+```
+
+For school communism: labour,value, production,capital are the main topics
+
+#### For school continental:
+```{r,warning=FALSE, message=FALSE,echo=FALSE}
+creat.wordcloud(ps.school.split[5],ps.data,names(ps.school.split[5]))
+```
+
+For school continental:"madness","form","relationship" appear the most
+
+#### For school empiricism:
+```{r,warning=FALSE, message=FALSE,echo=FALSE}
+creat.wordcloud(ps.school.split[6],ps.data,names(ps.school.split[6]))
+```
+
+For school empiricism: "ideas/idea","reason" appear  frequently
+
+#### For school feminism:
+```{r,warning=FALSE, message=FALSE,echo=FALSE}
+creat.wordcloud(ps.school.split[7],ps.data,names(ps.school.split[7]))
+```
+
+For school feminism:without doubt,"women/woman"appear most,"man","love","children" appear frequently
+
+#### For school german_idealism:
+```{r,warning=FALSE, message=FALSE,echo=FALSE}
+creat.wordcloud(ps.school.split[8],ps.data,names(ps.school.split[8]))
+```
+
+For school german_idealism:quite abstract and conceptual words like "consciousness","self" and "law"
+
+#### For school nietzsche:
+```{r,warning=FALSE, message=FALSE,echo=FALSE}
+creat.wordcloud(ps.school.split[9],ps.data,names(ps.school.split[9]))
+```
+
+For school nietzsche:"life""virtue""god""love""soul"
+
+#### For school phenomenology:
+```{r,warning=FALSE, message=FALSE,echo=FALSE}
+creat.wordcloud(ps.school.split[10],ps.data,names(ps.school.split[10]))
+```
+
+
+For school phenomenology:"knowledge""experience""conciousness"
+
+#### For school plato:
+```{r,warning=FALSE, message=FALSE,echo=FALSE}
+creat.wordcloud(ps.school.split[11],ps.data,names(ps.school.split[11]))
+```
+
+
+For school plato:it is interesting "socrates" appears a lot of time
+
+#### For school rationalism:
+```{r,warning=FALSE, message=FALSE,echo=FALSE}
+creat.wordcloud(ps.school.split[12],ps.data,names(ps.school.split[12]))
+```
+
+For school rationalism:Why "god" appear most here?Maybe it is always used as  counterexamples
+
+#### For school stoicism:
+```{r,warning=FALSE, message=FALSE,echo=FALSE}
+creat.wordcloud(ps.school.split[13],ps.data,names(ps.school.split[13]))
+```
+
+For school stoicism:you can guess this school is from old greek period from the words"thou""thyself""thee"
+
+## Conclusions
+1. Philosophy focus mainly on conceptual things
+
+2. Different school of philosophers have their own topic
