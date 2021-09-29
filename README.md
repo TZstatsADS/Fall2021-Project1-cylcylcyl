@@ -10,7 +10,7 @@ This is the first and only *individual* (as opposed to *team*) project this seme
 Term: Fall 2021
 
 + Projec title: Know about philosophy from different school
-+ This project is conducted by [your name]
++ This project is conducted by Chuyang Liu
 
 + Project summary: As an international student,I  know a little about western philosophy and its schools.This report is a guidebook with selected Q&A aims at finding out what kind of topics do philosophers from different school focus on.
 

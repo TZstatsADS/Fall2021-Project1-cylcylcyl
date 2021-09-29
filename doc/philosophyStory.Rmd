@@ -121,7 +121,7 @@ freq = data.frame(sort(colSums(as.matrix(ps.dtm)), decreasing=TRUE))
 wordcloud(rownames(freq), freq[,1], max.words=100, colors=brewer.pal(5, "Dark2"))
 ```
 
-For each sentence,the "say" outstands,it seems that a lot of famous quoting exist through widsom's words
+For each sentence,the "nature""existence""object" outstands,we can see that philosophers focus a lot on conceptual and abstract topics,which make them think about the essence of world and man.
 
 ## Question 3:How do philosophors from different school think about the world?What are the difference
 
@@ -221,6 +221,6 @@ creat.wordcloud(ps.school.split[13],ps.data,names(ps.school.split[13]))
 For school stoicism:you can guess this school is from old greek period from the words"thou""thyself""thee"
 
 ## Conclusions
-1. Philosophy focus mainly on conceptual things
+1. Philosophy focus mainly on conceptual and abstract topics
 
 2. Different school of philosophers have their own topic
